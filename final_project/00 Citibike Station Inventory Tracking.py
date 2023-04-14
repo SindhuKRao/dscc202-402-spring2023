@@ -1,4 +1,7 @@
 # Databricks notebook source
+print("Branch to be deleted")
+
+# COMMAND ----------
 
 # MAGIC %md
 # MAGIC ##DSCC 202 - 402 Final Project Spring 2023
