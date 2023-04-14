@@ -1,4 +1,8 @@
 # Databricks notebook source
+print('hellodhaval')
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ##DSCC 202 - 402 Final Project Spring 2023
 # MAGIC <p>
