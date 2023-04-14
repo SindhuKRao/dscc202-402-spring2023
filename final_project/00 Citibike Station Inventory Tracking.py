@@ -1,5 +1,4 @@
 # Databricks notebook source
-print("Branch to be deleted")
 
 # COMMAND ----------
 
