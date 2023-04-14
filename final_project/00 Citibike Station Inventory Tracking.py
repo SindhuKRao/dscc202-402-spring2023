@@ -1,8 +1,6 @@
 # Databricks notebook source
+print("Sayan Swar Test")
 print("Hello World")
-
-# COMMAND ----------
-
 print('H')
 
 # COMMAND ----------
