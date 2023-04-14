@@ -1,8 +1,4 @@
 # Databricks notebook source
-print("Sayan Swar Test")
-print("Hello World")
-print('H')
-print('test')
 
 # COMMAND ----------
 
