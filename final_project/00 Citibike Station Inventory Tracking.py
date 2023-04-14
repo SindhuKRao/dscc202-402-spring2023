@@ -1,9 +1,4 @@
 # Databricks notebook source
-print("Sayan Swar Test")
-print("Hello World")
-print('H')
-
-# COMMAND ----------
 
 # MAGIC %md
 # MAGIC ##DSCC 202 - 402 Final Project Spring 2023
