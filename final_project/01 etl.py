@@ -3,13 +3,13 @@
 
 # COMMAND ----------
 
-# start_date = str(dbutils.widgets.get('01.start_date'))
-# end_date = str(dbutils.widgets.get('02.end_date'))
-# hours_to_forecast = int(dbutils.widgets.get('03.hours_to_forecast'))
-# promote_model = bool(True if str(dbutils.widgets.get('04.promote_model')).lower() == 'yes' else False)
+start_date = str(dbutils.widgets.get('01.start_date'))
+end_date = str(dbutils.widgets.get('02.end_date'))
+hours_to_forecast = int(dbutils.widgets.get('03.hours_to_forecast'))
+promote_model = bool(True if str(dbutils.widgets.get('04.promote_model')).lower() == 'yes' else False)
 
-# print(start_date,end_date,hours_to_forecast, promote_model)
-# print("YOUR CODE HERE...")
+print(start_date,end_date,hours_to_forecast, promote_model)
+print("YOUR CODE HERE...")
 
 # COMMAND ----------
 
@@ -50,63 +50,27 @@ bike_schema = StructType([
 
 # COMMAND ----------
 
-# rawbike_df = spark.readStream.format('csv')\
-#     .schema(bike_schema)\
-#     .option('sep',',')\
-#     .load(BIKE_TRIP_DATA_PATH)
-# display(rawbike_df)
+input_path = "dbfs:/FileStore/tables/raw/bike_trips/"
+output_path = "dbfs:/FileStore/tables/G07/bronze/bike_trips_history"
 
 # COMMAND ----------
 
-rawbike_df = spark.readStream.format('csv')\
-    .schema(bike_schema)\
-    .option('sep',',')\
-    .option("latestFirst", "true")\
-    .csv(BIKE_TRIP_DATA_PATH)
-display(rawbike_df)
+query = (
+    spark
+    .readStream
+    .format("csv")
+    .schema(bike_schema)  # specify the schema for the data
+    .option("header", "true")  # specify if the file has a header row
+    .load(input_path)
+    .writeStream
+    .format("delta")
+    .option("path", output_path)
+    .option("checkpointLocation", output_path + "/checkpoint")
+    .start()
+)
 
-# COMMAND ----------
-
-from pyspark.sql.functions import input_file_name
-
-# COMMAND ----------
-
-# bikeinfo_df=rawbike_df
-# displaybikeinfo_df
-df_with_filename = rawbike_df.withColumn("filename", input_file_name())
-
-# COMMAND ----------
-
-bronze_bike_query=df_with_filename.writeStream \
-  .format("console") \
-  .option("checkpointLocation", f'{GROUP_DATA_PATH}/_checkpoint') \
-  .start(f'{GROUP_DATA_PATH}/bike_hist')
-# bronze_bike_query.awaitTermination()
-
-# COMMAND ----------
-
-bronze_bike_query.status
-
-# COMMAND ----------
-
-  bronze_bike_query.stop()
-# display(bronze_bike_query)
-
-# COMMAND ----------
-
-# streamingQuery = (spark.readStream
-#                   .format("csv")
-#                   .option("header", "true")
-#                   .option("path", f'{GROUP_DATA_PATH})\
-#                   .load()\
-#                   .writeStream\
-#                   .format("delta")\
-#                   .option("checkpointLocation", f'{GROUP_DATA_PATH}/_checkpoint')\
-#                   .option("path", f'{GROUP_DATA_PATH}')\
-#                   .start())
-
-# if not streamingQuery.isActive:
-#     streamingQuery.start()
+# Wait for the stream to finish
+query.awaitTermination()
 
 # COMMAND ----------
 
@@ -160,95 +124,82 @@ weather_schema = StructType([
 
 # COMMAND ----------
 
-rawweather_df = spark.readStream.format("csv")\
-    .option("header", "true") \
-    .schema(weather_schema)\
-    .option("path", "dbfs:/FileStore/tables/raw/weather/*.csv") \
-    .load()
+input_path2 = "dbfs:/FileStore/tables/raw/weather/"
+output_path2 = "dbfs:/FileStore/tables/G07/bronze/weather_history"
 
 # COMMAND ----------
 
-# display(rawweather_df)
+query = (
+    spark
+    .readStream
+    .format("csv")
+    .schema(weather_schema)  # specify the schema for the data
+    .option("header", "true")  # specify if the file has a header row
+    .load(input_path2)
+    .writeStream
+    .format("delta")
+    .option("path", output_path2)
+    .option("checkpointLocation", output_path2 + "/checkpoint")
+    .start()
+)
 
-# COMMAND ----------
-
-query=rawweather_df.writeStream \
-  .outputMode("append")\
-  .format("delta") \
-  .trigger(processingTime="1 second")\
-  .option("checkpointLocation", f'{GROUP_DATA_PATH}') \
-  .start(f'{GROUP_DATA_PATH}\weather_data')
-
-# COMMAND ----------
-
-query.stop()
-
-# COMMAND ----------
-
-# from delta.tables import DeltaTable
-
-# COMMAND ----------
-
-# from pyspark.sql import SparkSession
-
-# COMMAND ----------
-
-# spark = SparkSession.builder.appName("DeltaTableMove").getOrCreate()
+# Wait for the stream to finish
+query.awaitTermination()
 
 # COMMAND ----------
 
 # delta_table = DeltaTable.forPath(BRONZE_STATION_INFO_PATH, "dbfs:/FileStore/tables/bronze_station_info.delta")
 # ALTER TABLE bronze_station_info SET LOCATION 'dbfs:/FileStore/tables/G07/'
-stationinfo_delta_table = spark.read.load(BRONZE_STATION_INFO_PATH)
+# stationinfo_delta_table = spark.read.load(BRONZE_STATION_INFO_PATH)
 
 # COMMAND ----------
 
-display(stationinfo_delta_table)
+# display(stationinfo_delta_table)
 
 # COMMAND ----------
 
-stationinfo_delta_table.write.format("parquet").save(f'{GROUP_DATA_PATH}/bronze_station_info')
+# stationinfo_delta_table.write.format("delta").save(f'{GROUP_DATA_PATH}/bronze/bronze_station_info')
 
 # COMMAND ----------
 
-stationstatus_delta_table = spark.read.load(BRONZE_STATION_STATUS_PATH)
+# stationstatus_delta_table = spark.read.load(BRONZE_STATION_STATUS_PATH)
 
 # COMMAND ----------
 
-display(stationstatus_delta_table)
+# display(stationstatus_delta_table)
 
 # COMMAND ----------
 
-stationstatus_delta_table.write.format("parquet").save(f'{GROUP_DATA_PATH}/bronze_station_status')
+# stationstatus_delta_table.write.format("parquet").save(f'{GROUP_DATA_PATH}/bronze_station_status')
 
 # COMMAND ----------
 
-nycweather_delta_table = spark.read.load(BRONZE_NYC_WEATHER_PATH)
+# nycweather_delta_table = spark.read.load(BRONZE_NYC_WEATHER_PATH)
 
 # COMMAND ----------
 
-display(nycweather_delta_table)
+# display(nycweather_delta_table)
 
 # COMMAND ----------
 
-nycweather_delta_table.write.format("parquet").save(f'{GROUP_DATA_PATH}/bronze_weather')
+# nycweather_delta_table.write.format("parquet").save(f'{GROUP_DATA_PATH}/bronze/bronze_weather')
 
 # COMMAND ----------
 
-# spark.sql(f"ALTER TABLE delta.`{stationinfo_delta_table}` SET LOCATION 'dbfs:/FileStore/tables/G07/'")
+# dbutils.fs.rm("dbfs:/FileStore/tables/G07/\weather_data", True)
 
 # COMMAND ----------
 
-files=dbutils.fs.ls(f'{BRONZE_NYC_WEATHER_PATH}')
+files=dbutils.fs.ls("dbfs:/FileStore/tables/G07")
 # files=dbutils.fs.ls(f'{GROUP_DATA_PATH}/bronze_station_info')
 
 # COMMAND ----------
 
-count=0
+# count=0
 for file in files:
-    count+=1
-print(count)
-#     print(file.name)
+#     count+=1
+# print(count)
+    print(file.name)
 
 # COMMAND ----------
 
